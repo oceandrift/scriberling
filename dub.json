@@ -1,0 +1,24 @@
+{
+	"name": "scriberling",
+	"description": "Embeddable static site generator and template engine.",
+
+	"copyright": "Elias Batek",
+	"license": "BSL-1.0",
+
+	"targetPath": "bin",
+
+	"configurations": [
+		{
+			"name": "app",
+			"targetName": "scriberling",
+			"targetType": "executable"
+		},
+		{
+			"name": "library",
+			"targetType": "library",
+			"excludedSourceFiles": [
+				"source/scriberling/app.d"
+			]
+		}
+	]
+}
