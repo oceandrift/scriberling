@@ -4,13 +4,15 @@ import std.ascii;
 import scriberling.types;
 
 /++
-	Type of a Scriberling source token
+	Type of a Scriberling Document Format source token
  +/
-enum TokenType {
+enum SDFTokenType {
 	///
 	error,
 	///
 	whitespace,
+	///
+	identifier,
 	///
 	braceBlockOpening,
 	///
@@ -19,8 +21,6 @@ enum TokenType {
 	braceBlockOpeningWsCtrl,
 	///
 	braceBlockClosingWsCtrl,
-	///
-	backslash,
 	///
 	escapeSeq,
 	///
@@ -34,13 +34,16 @@ enum TokenType {
 }
 
 /++
-	Scriberling source token
+	Scriberling Document Format source token
  +/
-struct Token {
+struct SDFToken {
 	TokenType type;
 	hstring data;
 	Location location;
 }
+
+private alias Token = SDFToken;
+private alias TokenType = SDFTokenType;
 
 private static {
 	immutable string errorMsgBinaryFile = "Binary data in text file.";
@@ -63,9 +66,9 @@ private static {
 }
 
 /++
-	Lexer for Scriberling source files
+	Lexer for Scriberling Document Format source files
  +/
-struct Lexer {
+struct SDFLexer {
 
 	private {
 		hstring _source;
@@ -137,8 +140,21 @@ struct Lexer {
 		return result;
 	}
 
-	private Token makeTextToken() {
-		ptrdiff_t length = _source.scanEndOfText();
+	private Token makeTextToken(size_t skip = 0) {
+		ptrdiff_t length = _source[skip .. $].scanEndOfText();
+		assert((length > 0) || (skip > 0));
+
+		length += skip;
+
+		// is identifier?
+		ptrdiff_t lengthWhitespace = _source[length .. $].scanEndOfWhitespace();
+		const idxNextToken = length + lengthWhitespace;
+		if (idxNextToken != _source.length) {
+			if (_source[idxNextToken] == '{') {
+				return this.makeToken(TokenType.identifier, length);
+			}
+		}
+
 		return this.makeToken(TokenType.text, length);
 	}
 
@@ -193,11 +209,21 @@ struct Lexer {
 		case '\x5B': // '['
 			return this.makeTextToken();
 
-		case '\x5C': // '\\'
-			if (this.isOnFinalChar) {
-				return this.makeError(errorMsgInvalidEscapeSeq, 1);
+		case '\x5C': /* '\\' */ {
+				if (this.isOnFinalChar) {
+					return this.makeError(errorMsgInvalidEscapeSeq, 1);
+				}
+				auto token = Token(
+					TokenType.escapeSeq,
+					_source[1 .. 2],
+					_location,
+				);
+
+				_source = _source[2 .. $];
+				_location.advance(_source[1 .. 2]);
+
+				return token;
 			}
-			return this.makeToken(TokenType.escapeSeq, 2);
 
 		case '\x5D': .. case '\x60': // ]^_`
 		case '\x61': .. case '\x7A': // 'a' .. 'z'
@@ -219,7 +245,7 @@ struct Lexer {
 			return Token(TokenType.error, errorMsgBinaryFile);
 
 		case '\x80': .. case '\xFF': // Unicode
-			return this.makeToken(TokenType.text, 1);
+			return this.makeTextToken();
 
 		default:
 			assert(false, "unreachable");
@@ -231,7 +257,7 @@ struct Lexer {
 	private Token lexDash() {
 		// "-<EOF>"
 		if (this.isOnFinalChar) {
-			return this.makeToken(TokenType.text, 1);
+			return this.makeTextToken();
 		}
 
 		// "-}"
@@ -327,17 +353,17 @@ struct Lexer {
 	private Token lexSlash() {
 		// "/<EOF>"
 		if (this.isOnFinalChar) {
-			return this.makeToken(TokenType.text, 1);
+			return this.makeTextToken();
 		}
 
 		switch (_source[1]) {
 		default:
-			return this.makeToken(TokenType.text, 1);
+			return this.makeTextToken(1);
 
 		case '/': /* "//" */ {
 				auto idx = _source[1 .. $].scanFor('\n');
 				if (idx <= 0) {
-					return this.makeToken(TokenType.text, 1);
+					return this.makeTextToken();
 				}
 
 				this.advanceLocationToNextLine();
@@ -449,12 +475,29 @@ private {
 	ptrdiff_t scanEndOfText(hstring data) {
 		foreach (idx, c; data) {
 			switch (c) {
-			case '!': .. case ',':
-			case '.':
+			case '!': .. case '.':
 			case '0': .. case '[':
 			case ']': .. case 'z':
 			case '|':
 			case '~':
+			case '\x80': .. case '\xFF':
+				continue;
+
+			default:
+				return idx;
+			}
+		}
+
+		return data.length;
+	}
+
+	ptrdiff_t scanEndOfWhitespace(hstring data) {
+		foreach (idx, c; data) {
+			switch (c) {
+
+			case ' ':
+			case '\x09':
+			case '\x0A': .. case '\x0D':
 				continue;
 
 			default:
