@@ -42,10 +42,34 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			import scriberling.types;
 
 			const source = readText(args[2]);
-			auto lexer = Lexer(source, Location(args[2], 1, 1));
-			foreach (token; lexer){
+			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
+			bool hasError = false;
+
+			foreach (token; lexer) {
+				if (token.type == SDFTokenType.error) {
+					hasError = true;
+				}
 				writeln(token);
 			}
+
+			return (hasError) ? 1 : 0;
+		}
+
+	case "--parse": {
+			import std.file : readText;
+			import scriberling.formats.sdf.lexer;
+			import scriberling.formats.sdf.parser;
+			import scriberling.types;
+
+			const source = readText(args[2]);
+			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
+			try {
+				auto doc = parseSDF(lexer);
+			} catch (Exception ex) {
+				stderr.printException(ex);
+				return 1;
+			}
+			return 0;
 		}
 	}
 
@@ -61,6 +85,10 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 	}
 
 	return 0;
+}
+
+void printException(File sink, Exception ex) @trusted {
+				sink.writeln(ex);
 }
 
 void printHelp(File sink, string args0) {
