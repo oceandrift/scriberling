@@ -1,5 +1,6 @@
 module scriberling.formats.sdf.parser;
 
+import scriberling.dom;
 import scriberling.formats.sdf.lexer;
 import scriberling.types;
 import std.conv : to;
@@ -17,28 +18,18 @@ enum WhitespaceControl {
 	// dfmt on
 }
 
-class SDFNode {
-}
-
-class SDFElement : SDFNode {
-}
-
-final class SDFSDFElement : SDFElement {
-	hstring typeName;
-	SDFNode[] children;
+class SDFElement : Element {
 	WhitespaceControl whitespaceControl = WhitespaceControl.none;
 }
 
-final class SDFTextNode : SDFNode {
-	hstring content;
-}
-
-final class SDFWhitespaceNode : SDFNode {
-}
-
-final class SDFEmbeddedAppElement : SDFElement {
+final class SDFEmbeddedAppNode : Node {
 	hstring data;
 	Location location;
+
+	void toHTML(Sink sink){
+		// TODO: Implement
+		sink.put("<div>Error: Feature not implemented.</div>");
+	}
 }
 
 class SDFParserException : Exception {
@@ -87,12 +78,12 @@ final class SDFUnexpectedTokenException : SDFParserException {
 
 @safe pure:
 
-SDFSDFElement parseSDF(hstring data) {
+SDFElement parseSDF(hstring data) {
 	return parseSDF(SDFLexer(data));
 }
 
-SDFSDFElement parseSDF(SDFLexer lexer) {
-	auto root = new SDFSDFElement();
+SDFElement parseSDF(SDFLexer lexer) {
+	auto root = new SDFElement();
 	parseElementContent(lexer, root);
 
 	return root;
@@ -109,9 +100,9 @@ void skipWhitespace(ref SDFLexer lexer) {
 	}
 }
 
-SDFNode[] chompWhitespaceReverse(SDFNode[] list) {
+Node[] chompWhitespaceReverse(Node[] list) {
 	while (list.length > 0) {
-		auto node = cast(SDFWhitespaceNode) list[$ - 1];
+		auto node = cast(WhitespaceNode) list[$ - 1];
 		if (node is null) {
 			return list;
 		}
@@ -122,12 +113,12 @@ SDFNode[] chompWhitespaceReverse(SDFNode[] list) {
 	return list;
 }
 
-void parseElementContent(ref SDFLexer lexer, SDFSDFElement element) {
+void parseElementContent(ref SDFLexer lexer, SDFElement element) {
 	while (!lexer.empty) {
 		switch (lexer.front.type) {
 		case TokenType.text:
 		case TokenType.escapeSeq: {
-				auto node = new SDFTextNode();
+				auto node = new TextNode();
 				node.content = lexer.front.data;
 				element.children ~= node;
 
@@ -136,7 +127,7 @@ void parseElementContent(ref SDFLexer lexer, SDFSDFElement element) {
 			}
 
 		case TokenType.whitespace:
-			element.children ~= new SDFWhitespaceNode();
+			element.children ~= new WhitespaceNode();
 			lexer.popFront();
 			break;
 
@@ -173,30 +164,30 @@ void parseElementContent(ref SDFLexer lexer, SDFSDFElement element) {
 	}
 }
 
-SDFElement parseElement(ref SDFLexer lexer) {
+Node parseElement(ref SDFLexer lexer) {
 	return parseElementSignature(lexer);
 }
 
-SDFElement parseElementSignature(ref SDFLexer lexer) {
+Node parseElementSignature(ref SDFLexer lexer) {
 	if (lexer.front.type != TokenType.identifier) {
 		static immutable expected = [TokenType.identifier];
 		throw new SDFUnexpectedTokenException(lexer.front, expected);
 	}
 
-	const typeName = lexer.front.data;
+	const name = lexer.front.data;
 	lexer.popFront();
 
-	return parseElementOpening(lexer, typeName);
+	return parseElementOpening(lexer, name);
 }
 
-SDFElement parseElementOpening(ref SDFLexer lexer, hstring typeName) {
+Node parseElementOpening(ref SDFLexer lexer, hstring name) {
 	lexer.skipWhitespace();
 
 	switch (lexer.front.type) {
 
 	case TokenType.braceBlockOpeningWsCtrl: {
-			auto element = new SDFSDFElement();
-			element.typeName = typeName;
+			auto element = new SDFElement();
+			element.name = name;
 			element.whitespaceControl |= WhitespaceControl.left;
 			lexer.popFront();
 			parseElementContent(lexer, element);
@@ -204,8 +195,8 @@ SDFElement parseElementOpening(ref SDFLexer lexer, hstring typeName) {
 		}
 
 	case TokenType.braceBlockOpening: {
-			auto element = new SDFSDFElement();
-			element.typeName = typeName;
+			auto element = new SDFElement();
+			element.name = name;
 			lexer.popFront();
 			parseElementContent(lexer, element);
 			return element;
@@ -225,13 +216,13 @@ void parseMetaBlock(ref SDFLexer lexer, SDFElement element) {
 	lexer.popFront();
 }
 
-SDFEmbeddedAppElement parseEmbeddedAppBlock(ref SDFLexer lexer) {
+SDFEmbeddedAppNode parseEmbeddedAppBlock(ref SDFLexer lexer) {
 	if (lexer.front.type != TokenType.embeddedAppBlock) {
 		static immutable expected = [TokenType.embeddedAppBlock];
 		throw new SDFUnexpectedTokenException(lexer.front, expected);
 	}
 
-	auto element = new SDFEmbeddedAppElement();
+	auto element = new SDFEmbeddedAppNode();
 	element.data = lexer.front.data;
 	element.location = lexer.front.location;
 

@@ -71,6 +71,45 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			}
 			return 0;
 		}
+
+	case "--process": {
+			import std.file : readText;
+			import scriberling.formats.sdf.lexer;
+			import scriberling.formats.sdf.parser;
+			import scriberling.types;
+			import scriberling.dom;
+
+			static final class FileSink : Sink {
+				import std.stdio : File, write;
+
+				private {
+					File _file;
+				}
+
+				public this(File file) {
+					_file = file;
+				}
+
+				void put(char data) {
+					_file.write(data);
+				}
+
+				void put(hstring data) {
+					_file.write(data);
+				}
+			}
+
+			const source = readText(args[2]);
+			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
+			try {
+				auto doc = parseSDF(lexer);
+				doc.toHTML(new FileSink(stdout));
+			} catch (Exception ex) {
+				stderr.printException(ex);
+				return 1;
+			}
+			return 0;
+		}
 	}
 
 	if (args.length != 3) {
@@ -88,7 +127,7 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 }
 
 void printException(File sink, Exception ex) @trusted {
-				sink.writeln(ex);
+	sink.writeln(ex);
 }
 
 void printHelp(File sink, string args0) {
