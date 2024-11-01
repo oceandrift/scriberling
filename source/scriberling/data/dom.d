@@ -55,11 +55,11 @@ private void printAttributes(Sink sink, const hstring[hstring] attributes) @safe
 class Node {
 
 	private {
-		Node _parent = null;
+		Element _parent = null;
 	}
 
 	///
-	inout(Node) parent() inout @safe pure nothrow @nogc {
+	inout(Element) parent() inout @safe pure nothrow @nogc {
 		return _parent;
 	}
 
@@ -146,9 +146,21 @@ class Element : Node {
 	}
 }
 
-///
-bool hasChildren(const Element element) @safe {
-	return (element.children.length > 0);
+@safe pure {
+
+	///
+	bool hasChildren(const Element element) {
+		return (element.children.length > 0);
+	}
+
+	void replaceChild(Element element, Node needle, Node substitute) {
+		foreach (ref child; element._children) {
+			if (child is needle) {
+				child = substitute;
+				return;
+			}
+		}
+	}
 }
 
 ///

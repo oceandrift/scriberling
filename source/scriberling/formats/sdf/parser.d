@@ -201,7 +201,7 @@ Node parseElementOpening(ref SDFLexer lexer, hstring name) {
 		}
 
 	case TokenType.embeddedAppBlock:
-		return parseEmbeddedAppBlock(lexer);
+		return parseEmbeddedAppBlock(lexer, name);
 
 	default:
 		static immutable expected = [TokenType.braceBlockOpening];
@@ -214,16 +214,17 @@ void parseMetaBlock(ref SDFLexer lexer, SDFElement element) {
 	lexer.popFront();
 }
 
-EmbeddedAppNode parseEmbeddedAppBlock(ref SDFLexer lexer) {
+EmbeddedAppNode parseEmbeddedAppBlock(ref SDFLexer lexer, hstring name) {
 	if (lexer.front.type != TokenType.embeddedAppBlock) {
 		static immutable expected = [TokenType.embeddedAppBlock];
 		throw new SDFUnexpectedTokenException(lexer.front, expected);
 	}
 
-	auto element = new EmbeddedAppNode();
-	element.data = lexer.front.data;
-	element.location = lexer.front.location;
+	auto node = new EmbeddedAppNode();
+	node.app = name;
+	node.data = lexer.front.data;
+	node.location = lexer.front.location;
 
 	lexer.popFront();
-	return element;
+	return node;
 }

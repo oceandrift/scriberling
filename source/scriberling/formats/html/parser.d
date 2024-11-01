@@ -3,7 +3,7 @@ module scriberling.formats.html.parser;
 import scriberling.data.dom;
 import scriberling.types;
 
-@safe:
+@safe pure:
 
 RawNode parseHTML(hstring data) {
 	auto node = new RawNode();

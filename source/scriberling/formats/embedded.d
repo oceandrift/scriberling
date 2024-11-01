@@ -18,13 +18,13 @@ final class EmbeddedAppNode : Node {
 
 	///
 	override void analyze(const SiteConfig) pure {
-		// TODO
-		analyzeEmbeddedAppNode(app, data);
-		return;
+		auto substitute = analyzeEmbeddedAppNode(app, data);
+		assert(substitute !is null);
+
+		this.parent.replaceChild(this, substitute);
 	}
 
 	override void compile(Sink sink) {
-		// TODO: Implement
-		sink.put("<div>Error: Feature not implemented.</div>");
+		throw new Exception("Cannot compile unanalyzed embedded-app node.");
 	}
 }
