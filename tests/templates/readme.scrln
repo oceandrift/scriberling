@@ -1,10 +1,3 @@
-# Scriberling
-
-Scriberling is an embeddable **static site generator** and a **template engine**.
-
-## Example
-
-```scriberling
 article {
 	---
 	id: "readme"
@@ -34,4 +27,3 @@ article {
 		}
 	}
 }
-```

@@ -1,0 +1,46 @@
+/**
+	Scriberling Demo Page
+
+	This is mostly designed for testing purposes.
+ */
+html {
+	head {
+		meta {
+			--- charset: "UTF-8"
+		}
+		meta {
+			---
+			name: "viewport"
+			content: "width=device-width, initial-scale=1"
+			---
+		}
+
+		title { Page }
+
+		style {{{
+			html {
+				font-size: 16px;
+			}
+		}}}
+	}
+
+	/++
+		asdf
+		jklö
+		/+ git /**/ hub 
+			/+ xx
+			+/+/
+		+/
+	 +/
+
+	body {
+		h1 {- Page -}
+		p {
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+			sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+		}
+		p {
+			What "so" <ever>.
+		}
+	}
+}
