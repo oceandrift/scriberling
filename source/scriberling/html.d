@@ -4,9 +4,39 @@
 module scriberling.html;
 
 import std.range : ElementType, isInputRange;
+import std.typecons;
 import scriberling.types;
 
 @safe pure:
+
+///
+enum EscapeCharacterSelection : ubyte {
+	///
+	none = 0b_0000_0000,
+
+	// dfmt off
+	///
+	amp  = 0b_0000_0001,
+	///
+	lt   = 0b_0000_0010,
+	///
+	gt   = 0b_0000_0100,
+	///
+	quot = 0b_0000_1000,
+	///
+	d39  = 0b_0001_0000,
+	// dfmt on
+
+	///
+	content = (amp | lt | gt),
+	///
+	attributeDoubleQuotesOnly = (amp | lt | gt | quot),
+	///
+	attribute = (amp | lt | gt | quot | d39),
+
+	///
+	all = 0b_1111_1111,
+}
 
 private {
 	struct Escape {
@@ -14,15 +44,22 @@ private {
 		string escapeSequence;
 	}
 
-	Escape[] getEscapeMap(bool escapeQuotes) nothrow {
-		Escape[] m = [
-			Escape('&', "&amp;"),
-			Escape('<', "&lt;"),
-			Escape('>', "&gt;"),
-		];
+	Escape[] getEscapeMap(EscapeCharacterSelection escapeChars) nothrow {
+		auto m = new Escape[](0);
 
-		if (escapeQuotes) {
+		if (escapeChars & EscapeCharacterSelection.amp) {
+			m ~= Escape('&', "&amp;");
+		}
+		if (escapeChars & EscapeCharacterSelection.lt) {
+			m ~= Escape('<', "&lt;");
+		}
+		if (escapeChars & EscapeCharacterSelection.gt) {
+			m ~= Escape('>', "&gt;");
+		}
+		if (escapeChars & EscapeCharacterSelection.quot) {
 			m ~= Escape('"', "&quot;");
+		}
+		if (escapeChars & EscapeCharacterSelection.d39) {
 			m ~= Escape('\'', "&#39;");
 		}
 
@@ -33,11 +70,11 @@ private {
 /++
 	HTML escaping implementation
  +/
-struct HTMLEscaper(bool escapeQuotes = true) {
+struct HTMLEscaper(EscapeCharacterSelection escapeChars = EscapeCharacterSelection.all) {
 @safe pure nothrow:
 
 	private {
-		static immutable _escapeMap = getEscapeMap(escapeQuotes);
+		static immutable _escapeMap = getEscapeMap(escapeChars);
 
 		hstring _input;
 
@@ -87,14 +124,21 @@ struct HTMLEscaper(bool escapeQuotes = true) {
 			return;
 		}
 
+		// dfmt off
+
 		// needs escaping?
-		static foreach (esc; _escapeMap) {
-			if (_input.front == esc.specialChar) {
-				_front = esc.escapeSequence[0]; // store first char of escape sequence in front
-				_buffer = esc.escapeSequence[1 .. $]; // load rest into buffer
-				return;
+		switch (_input.front) {
+			default:
+				break;
+
+			static foreach (esc; _escapeMap) {
+				case esc.specialChar:
+					_front = esc.escapeSequence[0]; // store first char of escape sequence in front
+					_buffer = esc.escapeSequence[1 .. $]; // load rest into buffer
+					return;
 			}
 		}
+		// dfmt on
 
 		// no escaping
 		_front = _input.front;
@@ -118,9 +162,12 @@ struct HTMLEscaper(bool escapeQuotes = true) {
 	Returns:
 		Input Range; call `.toHString` to convert it into an hstring
  +/
-HTMLEscaper!(escapeQuotes) htmlEscape(bool escapeQuotes = true)(hstring input) nothrow @nogc
-		{
-	return HTMLEscaper!escapeQuotes(input);
+HTMLEscaper!(escapeChars) htmlEscape(
+	EscapeCharacterSelection escapeChars = EscapeCharacterSelection.all,
+)(
+	hstring input,
+) nothrow @nogc {
+	return HTMLEscaper!escapeChars(input);
 }
 
 unittest {
@@ -165,7 +212,7 @@ unittest {
 	assert(htmlEscape(`<p style="background: #FFF">`)
 			.toHString == "&lt;p style=&quot;background: #FFF&quot;&gt;");
 
-	assert(htmlEscape!false(`<p style="background: #FFF">`)
+	assert(htmlEscape!(EscapeCharacterSelection.content)(`<p style="background: #FFF">`)
 			.toHString == `&lt;p style="background: #FFF"&gt;`);
 
 	assert(htmlEscape(`<p style='background: #FFF'>`)
@@ -173,7 +220,6 @@ unittest {
 
 	hstring txt = `<better escape="me" />`;
 	assert(htmlEscape(txt).toHString == "&lt;better escape=&quot;me&quot; /&gt;");
-
 }
 
 ///

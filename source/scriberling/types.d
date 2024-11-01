@@ -9,7 +9,7 @@ alias hstring = const(char)[];
 public @safe pure nothrow @nogc {
 
 	/++
-		Emulates input range for [hstring].
+		Emulates an input range for [hstring].
 
 		No auto-decoding.
 	 +/

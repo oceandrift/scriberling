@@ -4,6 +4,7 @@
 module scriberling.dom;
 
 import scriberling.html;
+import scriberling.siteconfig;
 import scriberling.types;
 import std.range : isOutputRange;
 
@@ -30,14 +31,49 @@ static immutable lineBreak = '\n';
 ///
 interface Node {
 	///
+	void compile(const SiteConfig siteConfig) @safe pure;
+	///
 	void toHTML(Sink sink) @safe;
 }
 
 class Element : Node {
-	hstring name;
-	bool isVoid = false;
-	Node[] children;
-	hstring[hstring] attributes;
+	public {
+		hstring name;
+		bool isVoid = false;
+		Node[] children;
+		hstring[hstring] attributes;
+	}
+
+	private {
+		bool _compiled = false;
+	}
+
+@safe:
+
+	///
+	final void compile(const SiteConfig siteConfig) pure {
+		if (_compiled) {
+			return;
+		}
+
+		compileElement(siteConfig);
+		_compiled = true;
+	}
+
+	final protected void compileElementDefaults(const SiteConfig siteConfig) pure {
+		auto voidElementInfo = name in siteConfig.voidElements;
+		if (voidElementInfo !is null) {
+			this.isVoid = *voidElementInfo;
+		}
+
+		foreach (child; children) {
+			child.compile(siteConfig);
+		}
+	}
+
+	protected void compileElement(const SiteConfig siteConfig) pure {
+		this.compileElementDefaults(siteConfig);
+	}
 
 	///
 	void toHTML(Sink sink) {
@@ -47,8 +83,10 @@ class Element : Node {
 			sink.put(htmlTagEnd);
 		}
 
-		if (!this.isVoid) {
+		// TODO: Ignore whitespace children
+		const printClosingTag = (!this.isVoid || this.hasChildren);
 
+		if (printClosingTag) {
 			foreach (child; this.children) {
 				child.toHTML(sink);
 			}
@@ -62,17 +100,43 @@ class Element : Node {
 	}
 }
 
-final class TextNode : Node {
-	hstring content;
+///
+bool hasChildren(const Element element) @safe {
+	return (element.children.length > 0);
+}
 
+///
+final class TextNode : Node {
+	public {
+		hstring content;
+	}
+
+@safe:
+
+	///
+	void compile(const SiteConfig) pure {
+		return;
+	}
+
+	///
 	void toHTML(Sink sink) {
-		foreach (c; htmlEscape(content)) {
+		foreach (c; htmlEscape!(EscapeCharacterSelection.content)(content)) {
 			sink.put(c);
 		}
 	}
 }
 
+///
 final class WhitespaceNode : Node {
+
+@safe:
+
+	///
+	void compile(const SiteConfig) pure {
+		return;
+	}
+
+	///
 	void toHTML(Sink sink) {
 		sink.put(lineBreak);
 	}

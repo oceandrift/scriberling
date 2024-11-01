@@ -76,6 +76,7 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			import std.file : readText;
 			import scriberling.formats.sdf.lexer;
 			import scriberling.formats.sdf.parser;
+			import scriberling.siteconfig;
 			import scriberling.types;
 			import scriberling.dom;
 
@@ -103,7 +104,9 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
 			try {
 				auto doc = parseSDF(lexer);
+				doc.compile(defaultSiteConfig);
 				doc.toHTML(new FileSink(stdout));
+				stdout.writeln();
 			} catch (Exception ex) {
 				stderr.printException(ex);
 				return 1;

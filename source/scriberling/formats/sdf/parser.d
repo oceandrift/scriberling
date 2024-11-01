@@ -2,6 +2,7 @@ module scriberling.formats.sdf.parser;
 
 import scriberling.dom;
 import scriberling.formats.sdf.lexer;
+import scriberling.siteconfig;
 import scriberling.types;
 import std.conv : to;
 import std.sumtype;
@@ -20,13 +21,27 @@ enum WhitespaceControl {
 
 class SDFElement : Element {
 	WhitespaceControl whitespaceControl = WhitespaceControl.none;
+
+	///
+	override void compileElement(const SiteConfig siteConfig) pure {
+		this.compileElementDefaults(siteConfig);
+		return;
+	}
 }
 
 final class SDFEmbeddedAppNode : Node {
-	hstring data;
-	Location location;
 
-	void toHTML(Sink sink){
+	public {
+		hstring data;
+		Location location;
+	}
+
+	///
+	void compile(const SiteConfig) pure {
+		return;
+	}
+
+	void toHTML(Sink sink) {
 		// TODO: Implement
 		sink.put("<div>Error: Feature not implemented.</div>");
 	}
