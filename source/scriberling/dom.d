@@ -27,6 +27,26 @@ static immutable htmlClosingTagStart = "</";
 static immutable htmlTagEnd = '>';
 ///
 static immutable lineBreak = '\n';
+///
+static immutable attributeKeyValueSeparatorAndValueStart = "=\"";
+///
+static immutable attributeValueEnd = '"';
+
+private void printAttribute(Sink sink, hstring key, hstring value) @safe {
+	sink.put(key);
+	sink.put(attributeKeyValueSeparatorAndValueStart);
+	sink.put(attributeValueEnd);
+	foreach (c; htmlEscape!(EscapeCharacterSelection.attributeDoubleQuotesOnly)(value)) {
+		sink.put(value);
+	}
+	sink.put(attributeValueEnd);
+}
+
+private void printAttributes(Sink sink, const hstring[hstring] attributes) @safe {
+	foreach (key, value; attributes) {
+		sink.printAttribute(key, value);
+	}
+}
 
 ///
 interface Node {
@@ -80,6 +100,7 @@ class Element : Node {
 		if (name !is null) {
 			sink.put(htmlOpeningTagStart);
 			sink.put(this.name);
+			sink.printAttributes(this.attributes);
 			sink.put(htmlTagEnd);
 		}
 
