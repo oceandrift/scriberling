@@ -20,7 +20,7 @@
             * https://www.rfc-editor.org/rfc/rfc7230#section-5.3.1
         )
  +/
-module scriberling.uri;
+module scriberling.data.uri;
 
 public import scriberling.types;
 

@@ -76,9 +76,9 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			import std.file : readText;
 			import scriberling.formats.sdf.lexer;
 			import scriberling.formats.sdf.parser;
-			import scriberling.siteconfig;
+			import scriberling.site.config;
 			import scriberling.types;
-			import scriberling.dom;
+			import scriberling.data.dom;
 
 			static final class FileSink : Sink {
 				import std.stdio : File, write;

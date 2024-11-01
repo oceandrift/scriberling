@@ -1,10 +1,10 @@
 /++
 	DOM tree
  +/
-module scriberling.dom;
+module scriberling.data.dom;
 
-import scriberling.html;
-import scriberling.siteconfig;
+import scriberling.data.html;
+import scriberling.site.config;
 import scriberling.types;
 import std.range : isOutputRange;
 
@@ -49,29 +49,51 @@ private void printAttributes(Sink sink, const hstring[hstring] attributes) @safe
 }
 
 ///
-interface Node {
+class Node {
+
+	private {
+		Node _parent = null;
+	}
+
 	///
-	void compile(const SiteConfig siteConfig) @safe pure;
+	inout(Node) parent() inout @safe pure nothrow @nogc {
+		return _parent;
+	}
+
 	///
-	void toHTML(Sink sink) @safe;
+	abstract void compile(const SiteConfig siteConfig) @safe pure;
+	///
+	abstract void toHTML(Sink sink) @safe;
 }
 
+///
 class Element : Node {
 	public {
 		hstring name;
 		bool isVoid = false;
-		Node[] children;
 		hstring[hstring] attributes;
 	}
 
 	private {
+		Node[] _children;
 		bool _compiled = false;
 	}
 
 @safe:
 
+	public final {
+		inout(Node)[] children() inout pure nothrow @nogc {
+			return _children;
+		}
+
+		void appendChild(Node node) pure nothrow {
+			_children ~= node;
+			node._parent = this;
+		}
+	}
+
 	///
-	final void compile(const SiteConfig siteConfig) pure {
+	final override void compile(const SiteConfig siteConfig) pure {
 		if (_compiled) {
 			return;
 		}
@@ -96,7 +118,7 @@ class Element : Node {
 	}
 
 	///
-	void toHTML(Sink sink) {
+	override void toHTML(Sink sink) {
 		if (name !is null) {
 			sink.put(htmlOpeningTagStart);
 			sink.put(this.name);
@@ -135,12 +157,12 @@ final class TextNode : Node {
 @safe:
 
 	///
-	void compile(const SiteConfig) pure {
+	override void compile(const SiteConfig) pure {
 		return;
 	}
 
 	///
-	void toHTML(Sink sink) {
+	override void toHTML(Sink sink) {
 		foreach (c; htmlEscape!(EscapeCharacterSelection.content)(content)) {
 			sink.put(c);
 		}
@@ -153,12 +175,12 @@ final class WhitespaceNode : Node {
 @safe:
 
 	///
-	void compile(const SiteConfig) pure {
+	override void compile(const SiteConfig) pure {
 		return;
 	}
 
 	///
-	void toHTML(Sink sink) {
+	override void toHTML(Sink sink) {
 		sink.put(lineBreak);
 	}
 }

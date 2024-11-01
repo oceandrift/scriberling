@@ -1,8 +1,8 @@
 module scriberling.formats.sdf.parser;
 
-import scriberling.dom;
+import scriberling.data.dom;
 import scriberling.formats.sdf.lexer;
-import scriberling.siteconfig;
+import scriberling.site.config;
 import scriberling.types;
 import std.conv : to;
 import std.sumtype;
@@ -37,11 +37,11 @@ final class SDFEmbeddedAppNode : Node {
 	}
 
 	///
-	void compile(const SiteConfig) pure {
+	override void compile(const SiteConfig) pure {
 		return;
 	}
 
-	void toHTML(Sink sink) {
+	override void toHTML(Sink sink) {
 		// TODO: Implement
 		sink.put("<div>Error: Feature not implemented.</div>");
 	}
@@ -135,19 +135,19 @@ void parseElementContent(ref SDFLexer lexer, SDFElement element) {
 		case TokenType.escapeSeq: {
 				auto node = new TextNode();
 				node.content = lexer.front.data;
-				element.children ~= node;
+				element.appendChild(node);
 
 				lexer.popFront();
 				break;
 			}
 
 		case TokenType.whitespace:
-			element.children ~= new WhitespaceNode();
+			element.appendChild(new WhitespaceNode());
 			lexer.popFront();
 			break;
 
 		case TokenType.identifier:
-			element.children ~= parseElement(lexer);
+			element.appendChild(parseElement(lexer));
 			break;
 
 		case TokenType.metaBlock:

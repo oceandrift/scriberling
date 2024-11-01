@@ -1,4 +1,4 @@
-module scriberling.siteconfig;
+module scriberling.site.config;
 
 ///
 struct SiteConfig {

@@ -1,7 +1,7 @@
 /++
 	HTML escaping
  +/
-module scriberling.html;
+module scriberling.data.html;
 
 import std.range : ElementType, isInputRange;
 import std.typecons;
@@ -225,7 +225,7 @@ unittest {
 ///
 unittest {
 	// Chain url-decoding with html-escaping:
-	import scriberling.uri;
+	import scriberling.data.uri;
 
 	// <script>alert('xss');</script>
 	const decodedAndEscaped = urlDecode("%3Cscript%3Ealert%28%27xss%27%29%3B%3C%2Fscript%3E")
