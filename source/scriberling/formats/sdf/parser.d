@@ -29,24 +29,6 @@ class SDFElement : Element {
 	}
 }
 
-final class SDFEmbeddedAppNode : Node {
-
-	public {
-		hstring data;
-		Location location;
-	}
-
-	///
-	override void compile(const SiteConfig) pure {
-		return;
-	}
-
-	override void toHTML(Sink sink) {
-		// TODO: Implement
-		sink.put("<div>Error: Feature not implemented.</div>");
-	}
-}
-
 class SDFParserException : Exception {
 	public {
 		Location location;
@@ -231,13 +213,13 @@ void parseMetaBlock(ref SDFLexer lexer, SDFElement element) {
 	lexer.popFront();
 }
 
-SDFEmbeddedAppNode parseEmbeddedAppBlock(ref SDFLexer lexer) {
+EmbeddedAppNode parseEmbeddedAppBlock(ref SDFLexer lexer) {
 	if (lexer.front.type != TokenType.embeddedAppBlock) {
 		static immutable expected = [TokenType.embeddedAppBlock];
 		throw new SDFUnexpectedTokenException(lexer.front, expected);
 	}
 
-	auto element = new SDFEmbeddedAppNode();
+	auto element = new EmbeddedAppNode();
 	element.data = lexer.front.data;
 	element.location = lexer.front.location;
 

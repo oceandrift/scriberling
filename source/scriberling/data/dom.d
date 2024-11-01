@@ -148,6 +148,24 @@ bool hasChildren(const Element element) @safe {
 	return (element.children.length > 0);
 }
 
+final class EmbeddedAppNode : Node {
+
+	public {
+		hstring data;
+		Location location;
+	}
+
+	///
+	override void compile(const SiteConfig) pure {
+		return;
+	}
+
+	override void toHTML(Sink sink) {
+		// TODO: Implement
+		sink.put("<div>Error: Feature not implemented.</div>");
+	}
+}
+
 ///
 final class TextNode : Node {
 	public {
