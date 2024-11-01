@@ -17,12 +17,13 @@ final class EmbeddedAppNode : Node {
 	}
 
 	///
-	override void compile(const SiteConfig) pure {
-		compileEmbeddedAppNode(app, data);
+	override void analyze(const SiteConfig) pure {
+		// TODO
+		analyzeEmbeddedAppNode(app, data);
 		return;
 	}
 
-	override void toHTML(Sink sink) {
+	override void compile(Sink sink) {
 		// TODO: Implement
 		sink.put("<div>Error: Feature not implemented.</div>");
 	}

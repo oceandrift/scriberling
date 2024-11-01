@@ -8,7 +8,7 @@ import scriberling.types;
 
 @safe:
 
-void compileEmbeddedAppNode(hstring name, hstring data) pure {
+void analyzeEmbeddedAppNode(hstring name, hstring data) pure {
 
 	static string makeExceptionMessage(hstring name) {
 		return "No app available to process embedded block of type `" ~ name ~ "`.";
@@ -27,13 +27,19 @@ void compileEmbeddedAppNode(hstring name, hstring data) pure {
 	}
 }
 
-Node compileHTML(hstring data) {
+Node analyzeMD(hstring data) pure {
+	import scriberling.formats.md.parser;
+
+	return parseMD(data);
+}
+
+Node analyzeHTML(hstring data) {
 	import scriberling.formats.html.parser;
 
 	return parseHTML(data);
 }
 
-Node compileSDF(hstring data) {
+Node analyzeSDF(hstring data) {
 	import scriberling.formats.sdf.parser;
 
 	return parseSDF(data);

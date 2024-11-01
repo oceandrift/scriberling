@@ -104,8 +104,8 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
 			try {
 				auto doc = parseSDF(lexer);
-				doc.compile(defaultSiteConfig);
-				doc.toHTML(new FileSink(stdout));
+				doc.analyze(defaultSiteConfig);
+				doc.compile(new FileSink(stdout));
 				stdout.writeln();
 			} catch (Exception ex) {
 				stderr.printException(ex);

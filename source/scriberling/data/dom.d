@@ -64,9 +64,9 @@ class Node {
 	}
 
 	///
-	abstract void compile(const SiteConfig siteConfig) @safe pure;
+	abstract void analyze(const SiteConfig siteConfig) @safe pure;
 	///
-	abstract void toHTML(Sink sink) @safe;
+	abstract void compile(Sink sink) @safe;
 }
 
 ///
@@ -96,7 +96,7 @@ class Element : Node {
 	}
 
 	///
-	final override void compile(const SiteConfig siteConfig) pure {
+	final override void analyze(const SiteConfig siteConfig) pure {
 		if (_compiled) {
 			return;
 		}
@@ -112,7 +112,7 @@ class Element : Node {
 		}
 
 		foreach (child; children) {
-			child.compile(siteConfig);
+			child.analyze(siteConfig);
 		}
 	}
 
@@ -121,7 +121,7 @@ class Element : Node {
 	}
 
 	///
-	override void toHTML(Sink sink) {
+	override void compile(Sink sink) {
 		if (name !is null) {
 			sink.put(htmlOpeningTagStart);
 			sink.put(this.name);
@@ -134,7 +134,7 @@ class Element : Node {
 
 		if (printClosingTag) {
 			foreach (child; this.children) {
-				child.toHTML(sink);
+				child.compile(sink);
 			}
 
 			if (name !is null) {
@@ -161,12 +161,12 @@ final class RawNode : Node {
 @safe:
 
 	///
-	override void compile(const SiteConfig siteConfig) {
+	override void analyze(const SiteConfig siteConfig) {
 		return;
 	}
 
 	///
-	override void toHTML(Sink sink) {
+	override void compile(Sink sink) {
 		sink.put(this.innerHTML);
 	}
 }
@@ -180,12 +180,12 @@ final class TextNode : Node {
 @safe:
 
 	///
-	override void compile(const SiteConfig) pure {
+	override void analyze(const SiteConfig) pure {
 		return;
 	}
 
 	///
-	override void toHTML(Sink sink) {
+	override void compile(Sink sink) {
 		foreach (c; htmlEscape!(EscapeCharacterSelection.content)(content)) {
 			sink.put(c);
 		}
@@ -198,12 +198,12 @@ final class WhitespaceNode : Node {
 @safe:
 
 	///
-	override void compile(const SiteConfig) pure {
+	override void analyze(const SiteConfig) pure {
 		return;
 	}
 
 	///
-	override void toHTML(Sink sink) {
+	override void compile(Sink sink) {
 		sink.put(lineBreak);
 	}
 }
