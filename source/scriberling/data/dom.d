@@ -9,6 +9,9 @@ import scriberling.types;
 import std.range : isOutputRange;
 
 ///
+public import scriberling.site.config : SiteConfig;
+
+///
 interface Sink {
 	///
 	void put(char data) @safe;
@@ -148,21 +151,23 @@ bool hasChildren(const Element element) @safe {
 	return (element.children.length > 0);
 }
 
-final class EmbeddedAppNode : Node {
+///
+final class RawNode : Node {
 
 	public {
-		hstring data;
-		Location location;
+		hstring innerHTML;
 	}
 
+@safe:
+
 	///
-	override void compile(const SiteConfig) pure {
+	override void compile(const SiteConfig siteConfig) {
 		return;
 	}
 
+	///
 	override void toHTML(Sink sink) {
-		// TODO: Implement
-		sink.put("<div>Error: Feature not implemented.</div>");
+		sink.put(this.innerHTML);
 	}
 }
 

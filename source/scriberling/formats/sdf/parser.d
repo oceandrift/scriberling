@@ -2,6 +2,7 @@ module scriberling.formats.sdf.parser;
 
 import scriberling.data.dom;
 import scriberling.formats.sdf.lexer;
+import scriberling.formats.embedded;
 import scriberling.site.config;
 import scriberling.types;
 import std.conv : to;
