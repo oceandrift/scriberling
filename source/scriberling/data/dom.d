@@ -38,9 +38,8 @@ static immutable attributeValueEnd = '"';
 private void printAttribute(Sink sink, hstring key, hstring value) @safe {
 	sink.put(key);
 	sink.put(attributeKeyValueSeparatorAndValueStart);
-	sink.put(attributeValueEnd);
 	foreach (c; htmlEscape!(EscapeCharacterSelection.attributeDoubleQuotesOnly)(value)) {
-		sink.put(value);
+		sink.put(c);
 	}
 	sink.put(attributeValueEnd);
 }
@@ -125,7 +124,10 @@ class Element : Node {
 		if (name !is null) {
 			sink.put(htmlOpeningTagStart);
 			sink.put(this.name);
-			sink.printAttributes(this.attributes);
+			if (this.attributes.length > 0) {
+				sink.put(' ');
+				sink.printAttributes(this.attributes);
+			}
 			sink.put(htmlTagEnd);
 		}
 
