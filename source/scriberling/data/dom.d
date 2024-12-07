@@ -89,7 +89,8 @@ class Element : Node {
 			return _children;
 		}
 
-		void appendChild(Node node) pure nothrow {
+		void appendChild(Node node) pure nothrow
+		in (node !is null) {
 			_children ~= node;
 			node._parent = this;
 		}
@@ -153,7 +154,9 @@ class Element : Node {
 		return (element.children.length > 0);
 	}
 
-	void replaceChild(Element element, Node needle, Node substitute) {
+	void replaceChild(Element element, Node needle, Node substitute)
+	in (needle !is null)
+	in (substitute !is null) {
 		foreach (ref child; element._children) {
 			if (child is needle) {
 				child = substitute;
