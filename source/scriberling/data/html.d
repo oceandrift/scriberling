@@ -3,9 +3,12 @@
  +/
 module scriberling.data.html;
 
+import std.conv;
 import std.range : ElementType, isInputRange;
 import std.typecons;
+import scriberling.data.unicode;
 import scriberling.types;
+import std.json;
 
 @safe pure:
 
@@ -204,6 +207,8 @@ unittest {
 
 ///
 unittest {
+	assert(htmlEscape("foo bar").toHString == "foo bar");
+
 	assert(htmlEscape("<html>").toHString == "&lt;html&gt;");
 	assert(htmlEscape("<<html>>").toHString == "&lt;&lt;html&gt;&gt;");
 
@@ -234,4 +239,79 @@ unittest {
 		.toHString;
 
 	assert(decodedAndEscaped == "&lt;script&gt;alert(&#39;xss&#39;);&lt;/script&gt;");
+}
+
+private {
+	static immutable string[string] entitiesTable = mixin(import("scriberling/data/html-entities.txt"));
+}
+
+/++
+	Decodes an HTML entity.
+
+	E.g. turns either of `&copy;`, `&#169;` or `&#xA9;` into `©`.
+ +/
+string htmlDecodeEntity(hstring entity) nothrow {
+	const resolved = htmlResolveEntity(entity);
+	if (resolved !is null) {
+		return resolved;
+	}
+
+	if ((entity.length < 3) || (entity[1] != '#')) {
+		return replacementCharacterString;
+	}
+
+	if (entity[$ - 1] == ';') {
+		entity = entity[0 .. ($ - 1)];
+	}
+
+	ulong codepoint;
+
+	try {
+		if (entity[2] == 'x') {
+			codepoint = entity[3 .. $].to!uint(16);
+		} else {
+			codepoint = entity[2 .. $].to!uint();
+		}
+	} catch (Exception) {
+		return replacementCharacterString;
+	}
+
+	return encodeCodepoint(cast(dchar) codepoint);
+}
+
+///
+unittest {
+	assert(htmlDecodeEntity("&copy;") == "©");
+	assert(htmlDecodeEntity("&copy") == "©");
+	assert(htmlDecodeEntity("&#169;") == "©");
+	assert(htmlDecodeEntity("&#xA9;") == "©");
+
+	assert(htmlDecodeEntity("&#x1F1E9;") == "\U0001F1E9");
+
+	// replacement char
+	assert(htmlDecodeEntity("&#nonsense;") == "\uFFFD");
+}
+
+/++
+	Resolves an HTML entity name.
+
+	E.g. turns `&copy;` into `©`.
+ +/
+string htmlResolveEntity(hstring entity) nothrow @nogc {
+	const str = entity in entitiesTable;
+
+	if (str is null) {
+		return null;
+	}
+
+	return *str;
+}
+
+///
+unittest {
+	assert(htmlResolveEntity("&copy;") == "©");
+	assert(htmlResolveEntity("&copy") == "©");
+	assert(htmlResolveEntity("&auml;") == "ä");
+	assert(htmlResolveEntity("&Auml;") == "Ä");
+	assert(htmlResolveEntity("&nbsp;") == "\u00A0");
 }
