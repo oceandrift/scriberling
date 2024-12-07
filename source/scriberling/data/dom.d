@@ -35,6 +35,11 @@ static immutable attributeKeyValueSeparatorAndValueStart = "=\"";
 ///
 static immutable attributeValueEnd = '"';
 
+///
+static immutable lineBreakString = "\n";
+///
+static immutable spaceString = " ";
+
 private void printAttribute(Sink sink, hstring key, hstring value) @safe {
 	sink.put(key);
 	sink.put(attributeKeyValueSeparatorAndValueStart);
@@ -163,6 +168,22 @@ class Element : Node {
 				return;
 			}
 		}
+	}
+}
+
+///
+final class NullNode : Node {
+
+@safe pure nothrow @nogc:
+
+	///
+	override void analyze(const SiteConfig) {
+		return;
+	}
+
+	///
+	override void compile(Sink) {
+		return;
 	}
 }
 

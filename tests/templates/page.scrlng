@@ -42,5 +42,40 @@ html {
 		p {
 			What "so" <ever>.
 		}
+		p {
+			Loren em { ipsum } dolor…
+		}
+		div {
+			md {{{
+				## Markdown support
+
+				Let’s embed *a bit* of **markdown**.
+
+				This gets us an easy to read syntax and great capabilities
+				like support for `inline` code and [links](https://example.com).
+
+				Implemented via:
+				<https://github.com/mity/md4c>
+
+				### Code block
+
+				```d
+				import std.stdio;
+
+				void main() {
+					writeln("Hello World");
+				}
+				```
+
+				### Image
+
+				![**image alt text**](http://example.org/image.png 'foo &quot; bar')
+
+				#### Nesting
+
+				- [![Enlarge](preview.jpg)](full.jpg)
+				- ![![Icon Text](icon.png)](target.jpg)
+			}}}
+		}
 	}
 }

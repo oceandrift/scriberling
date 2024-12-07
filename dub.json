@@ -7,6 +7,14 @@
 
 	"targetPath": "bin",
 
+	"sourceFiles": [
+		"importc/md4c.c"
+	],
+
+	"libs": [
+		"md4c"
+	],
+
 	"stringImportPaths": [
 		"source"
 	],

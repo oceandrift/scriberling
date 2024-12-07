@@ -8,13 +8,26 @@ import scriberling.types;
 
 @safe pure:
 
-Node analyzeEmbeddedAppNode(hstring app, hstring data) {
+Node analyzeEmbeddedAppNode(hstring app, hstring data, const SiteConfig siteConfig) {
+	auto node = retrieveNode(app, data);
+	assert(node !is null, "No DOM node returned for block processed by app `" ~ app ~ "`.");
 
+	node.analyze(siteConfig);
+
+	return node;
+}
+
+Node retrieveNode(hstring app, hstring data) {
 	static string makeExceptionMessage(hstring app) {
 		return "No app available to process embedded block of type `" ~ app ~ "`.";
 	}
 
 	switch (app) {
+
+	case "md":
+	case "markdown":
+		return analyzeMD(data);
+
 	case "html":
 	case "raw":
 	case "script":
@@ -27,6 +40,12 @@ Node analyzeEmbeddedAppNode(hstring app, hstring data) {
 	default:
 		throw new Exception(makeExceptionMessage(app));
 	}
+}
+
+Node analyzeMD(hstring data) {
+	import scriberling.formats.md.parser;
+
+	return parseMD(data);
 }
 
 Node analyzeHTML(hstring data) {

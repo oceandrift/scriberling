@@ -17,10 +17,8 @@ final class EmbeddedAppNode : Node {
 	}
 
 	///
-	override void analyze(const SiteConfig) pure {
-		auto substitute = analyzeEmbeddedAppNode(app, data);
-		assert(substitute !is null);
-
+	override void analyze(const SiteConfig siteConfig) pure {
+		auto substitute = analyzeEmbeddedAppNode(app, data, siteConfig);
 		this.parent.replaceChild(this, substitute);
 	}
 
