@@ -46,6 +46,7 @@ private void printAttribute(Sink sink, hstring key, hstring value) @safe {
 
 private void printAttributes(Sink sink, const hstring[hstring] attributes) @safe {
 	foreach (key, value; attributes) {
+		sink.put(' ');
 		sink.printAttribute(key, value);
 	}
 }
@@ -124,10 +125,7 @@ class Element : Node {
 		if (name !is null) {
 			sink.put(htmlOpeningTagStart);
 			sink.put(this.name);
-			if (this.attributes.length > 0) {
-				sink.put(' ');
-				sink.printAttributes(this.attributes);
-			}
+			sink.printAttributes(this.attributes);
 			sink.put(htmlTagEnd);
 		}
 
