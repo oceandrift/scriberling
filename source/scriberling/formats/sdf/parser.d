@@ -137,7 +137,11 @@ void parseElementContent(ref SDFLexer lexer, SDFElement element) {
 			parseMetaBlock(lexer, element);
 			break;
 
-		case TokenType.braceBlockClosingWsCtrl:
+		case TokenType.braceBlockClosingWsCtrlOff:
+			element.whitespaceControl &= ~WhitespaceControl.right;
+			goto case TokenType.braceBlockClosing;
+
+		case TokenType.braceBlockClosingWsCtrlOn:
 			element.whitespaceControl |= WhitespaceControl.right;
 			goto case TokenType.braceBlockClosing;
 
@@ -183,7 +187,16 @@ Node parseElementOpening(ref SDFLexer lexer, hstring name) {
 
 	switch (lexer.front.type) {
 
-	case TokenType.braceBlockOpeningWsCtrl: {
+	case TokenType.braceBlockOpeningWsCtrlOff: {
+			auto element = new SDFElement();
+			element.name = name;
+			element.whitespaceControl &= ~WhitespaceControl.left;
+			lexer.popFront();
+			parseElementContent(lexer, element);
+			return element;
+		}
+
+	case TokenType.braceBlockOpeningWsCtrlOn: {
 			auto element = new SDFElement();
 			element.name = name;
 			element.whitespaceControl |= WhitespaceControl.left;

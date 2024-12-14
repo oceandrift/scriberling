@@ -18,9 +18,13 @@ enum SDFTokenType {
 	///
 	braceBlockClosing,
 	///
-	braceBlockOpeningWsCtrl,
+	braceBlockOpeningWsCtrlOn,
 	///
-	braceBlockClosingWsCtrl,
+	braceBlockClosingWsCtrlOn,
+	///
+	braceBlockOpeningWsCtrlOff,
+	///
+	braceBlockClosingWsCtrlOff,
 	///
 	escapeSeq,
 	///
@@ -241,7 +245,7 @@ struct SDFLexer {
 
 		// "-}"
 		if (_source[1] == '}') {
-			return this.makeToken(TokenType.braceBlockClosingWsCtrl, 2);
+			return this.makeToken(TokenType.braceBlockClosingWsCtrlOn, 2);
 		}
 
 		// "---"
@@ -289,7 +293,9 @@ struct SDFLexer {
 		const bool isBlock = _source.scanMatch!"{{{"();
 		if (!isBlock) {
 			if (_source[1] == '-') {
-				return this.makeToken(TokenType.braceBlockOpeningWsCtrl, 2);
+				return this.makeToken(TokenType.braceBlockOpeningWsCtrlOn, 2);
+			} else if (_source[1] == '+') {
+				return this.makeToken(TokenType.braceBlockOpeningWsCtrlOff, 2);
 			}
 			return this.makeToken(TokenType.braceBlockOpening, 1);
 		}
