@@ -176,7 +176,13 @@ struct SDFLexer {
 		case '\x20': // space
 			return this.makeWhitespaceToken();
 
-		case '\x21': .. case '\x2C': // !"#$%&'()*+,
+		case '\x21': .. case '\x2A': // !"#$%&'()*
+			return this.makeTextToken();
+
+		case '\x2B': // '+'
+			return this.lexPlus();
+
+		case '\x2C': // ','
 			return this.makeTextToken();
 
 		case '\x2D': // '-'
@@ -281,6 +287,20 @@ struct SDFLexer {
 		}
 
 		// "-<?>"
+		return this.makeTextToken();
+	}
+
+	private Token lexPlus() {
+		// "+<EOF>"
+		if (this.isOnFinalChar) {
+			return this.makeTextToken();
+		}
+
+		// "+}"
+		if (_source[1] == '}') {
+			return this.makeToken(TokenType.braceBlockClosingWsCtrlOff, 2);
+		}
+
 		return this.makeTextToken();
 	}
 
