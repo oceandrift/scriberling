@@ -81,7 +81,7 @@ struct SDFLexer {
 @safe pure nothrow @nogc:
 
 	///
-	public this(hstring sourceCode, Location initialLocation = Location(null, 1, 1)) {
+	public this(hstring sourceCode, Location initialLocation = Location(null, 0)) {
 		_source = sourceCode;
 		_location = initialLocation;
 
@@ -113,30 +113,20 @@ struct SDFLexer {
 		return (_source.length == 1);
 	}
 
-	private void advanceLocationToNextLine() {
-		++_location.line;
-		_location.column = 1;
-	}
-
-	private void advanceLocationBy(size_t n) {
-		_location.column += n;
+	private void advanceSourceLocationBy(size_t n) {
+		_source = _source[n .. $];
+		_location.offset += n;
 	}
 
 	private Token makeToken(TokenType type, size_t dataLength) {
 		auto result = Token(type, _source[0 .. dataLength], _location);
-
-		_source = _source[dataLength .. $];
-		this.advanceLocationBy(dataLength);
-
+		this.advanceSourceLocationBy(dataLength);
 		return result;
 	}
 
 	private Token makeError(hstring errorMessage, size_t dataLength) {
 		auto result = Token(TokenType.error, errorMessage, _location);
-
-		_source = _source[dataLength .. $];
-		this.advanceLocationBy(dataLength);
-
+		this.advanceSourceLocationBy(dataLength);
 		return result;
 	}
 
@@ -159,17 +149,8 @@ struct SDFLexer {
 	}
 
 	private Token makeWhitespaceToken() {
-		Location loc = _location;
-		ptrdiff_t length = _source.scanEndOfWhitespace(_location.line, _location.column);
-
-		auto token = Token(
-			TokenType.whitespace,
-			_source[0 .. length],
-			loc,
-		);
-
-		_source = _source[length .. $];
-		return token;
+		ptrdiff_t length = _source.scanEndOfWhitespace();
+		return this.makeToken(TokenType.whitespace, length);
 	}
 
 	private Token lexToken() {
@@ -219,9 +200,7 @@ struct SDFLexer {
 					_location,
 				);
 
-				_source = _source[2 .. $];
-				_location.advance(_source[1 .. 2]);
-
+				this.advanceSourceLocationBy(2);
 				return token;
 			}
 
@@ -279,9 +258,7 @@ struct SDFLexer {
 				const data = _source[metaBlockTag.length .. idxLF];
 				auto token = Token(TokenType.metaBlock, data, _location);
 
-				_location.advance(_source[0 .. idxLF]);
-				_source = _source[idxLF .. $];
-
+				this.advanceSourceLocationBy(idxLF);
 				return token;
 			}
 
@@ -295,9 +272,7 @@ struct SDFLexer {
 			const data = _source[metaBlockTag.length .. idxClosing];
 			auto token = Token(TokenType.metaBlock, data, _location);
 
-			_location.advance(_source[0 .. idxBlockEnd]);
-			_source = _source[idxBlockEnd .. $];
-
+			this.advanceSourceLocationBy(idxBlockEnd);
 			return token;
 		}
 
@@ -344,9 +319,7 @@ struct SDFLexer {
 			_location,
 		);
 
-		_location.line += countLineFeeds(_source[0 .. idxBlockEnd]);
-		_location.column = offsetBlockEnd - offsetDataEnd;
-		_source = _source[idxBlockEnd .. $];
+		this.advanceSourceLocationBy(idxBlockEnd);
 		return token;
 	}
 
@@ -366,7 +339,6 @@ struct SDFLexer {
 					return this.makeTextToken();
 				}
 
-				this.advanceLocationToNextLine();
 				return this.makeToken(TokenType.comment, idx);
 			}
 
@@ -387,9 +359,7 @@ struct SDFLexer {
 					_location,
 				);
 
-				_location.advance(_source[0 .. idxBlockEnd]);
-				_source = _source[idxBlockEnd .. $];
-
+				this.advanceSourceLocationBy(idxBlockEnd);
 				return token;
 			}
 
@@ -431,9 +401,7 @@ struct SDFLexer {
 				const data = _source[idxDataStart .. idxDataEnd];
 				auto token = Token(TokenType.comment, data, _location);
 
-				_location.advance(_source[0 .. idx]);
-				_source = _source[idx .. $];
-
+				this.advanceSourceLocationBy(idx);
 				return token;
 			}
 		}
@@ -459,17 +427,6 @@ private {
 		}
 
 		return counter;
-	}
-
-	void advance(ref Location loc, hstring data) {
-		foreach (c; data) {
-			if (c == '\n') {
-				++loc.line;
-				loc.column = 1;
-			} else {
-				loc.column += 1;
-			}
-		}
 	}
 
 	ptrdiff_t scanEndOfText(hstring data) {
@@ -498,29 +455,6 @@ private {
 			case ' ':
 			case '\x09':
 			case '\x0A': .. case '\x0D':
-				continue;
-
-			default:
-				return idx;
-			}
-		}
-
-		return data.length;
-	}
-
-	ptrdiff_t scanEndOfWhitespace(hstring data, ref ptrdiff_t line, ref ptrdiff_t column) {
-		foreach (idx, c; data) {
-			switch (c) {
-
-			case '\x0A':
-				++line;
-				column = 1;
-				continue;
-
-			case ' ':
-			case '\x09':
-			case '\x0B': .. case '\x0D':
-				++column;
 				continue;
 
 			default:

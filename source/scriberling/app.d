@@ -42,7 +42,7 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			import scriberling.types;
 
 			const source = readText(args[2]);
-			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
+			auto lexer = SDFLexer(source, Location(args[2], 0));
 			bool hasError = false;
 
 			foreach (token; lexer) {
@@ -62,9 +62,13 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			import scriberling.types;
 
 			const source = readText(args[2]);
-			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
+			auto lexer = SDFLexer(source, Location(args[2], 0));
 			try {
 				auto doc = parseSDF(lexer);
+				if (doc is null){
+					stderr.writeln("No document returned.");
+					return 1;
+				}
 			} catch (Exception ex) {
 				stderr.printException(ex);
 				return 1;
@@ -101,7 +105,7 @@ int mainImpl(string[] args, File stdin, File stdout, File stderr) {
 			}
 
 			const source = readText(args[2]);
-			auto lexer = SDFLexer(source, Location(args[2], 1, 1));
+			auto lexer = SDFLexer(source, Location(args[2], 0));
 			try {
 				auto doc = parseSDF(lexer);
 				doc.analyze(defaultSiteConfig);
